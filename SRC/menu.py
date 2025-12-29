@@ -77,6 +77,8 @@ def handle_selection(selection):
 
         with zipfile.ZipFile(loose_zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
             for item in os.listdir(output_root):
+                if item == "text.txt":
+                    continue
                 item_path = os.path.join(output_root, item)
 
                 if os.path.isfile(item_path) and item.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -112,6 +114,8 @@ def handle_selection(selection):
         output_dir = "output_pictures"
         
         for item in os.listdir(output_dir):
+            if item == "text.txt":
+                continue
             item_path = os.path.join(output_dir, item)
             try:
                 if os.path.isfile(item_path) or os.path.islink(item_path):

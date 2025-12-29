@@ -1,0 +1,1 @@
+Location of output photos. No need to add anything here unless you want to include non auto-cropped images into your zipped files.
