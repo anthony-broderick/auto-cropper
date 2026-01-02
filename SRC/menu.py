@@ -3,6 +3,20 @@ import os
 import cv2
 import zipfile
 import shutil
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+MEASURE_TIME = True
+
+def process_image(input_path, output_path, aspect_width, aspect_height):
+    image = cv2.imread(input_path)
+    if image is None:
+        raise RuntimeError(f"Failed to load image: {input_path}")
+    else:
+        print(f"Processing image: {input_path}")
+
+    fixed_image = track_eyes(image, aspect_width, aspect_height)
+    cv2.imwrite(output_path, fixed_image)
 
 def display_menu():
     print("""
@@ -21,24 +35,20 @@ def handle_selection(selection):
         input_root = "input_pictures"
         output_root = "output_pictures"
 
-        n = 1
+        if MEASURE_TIME:
+            start_time = time.time()
+            processed_images = 0
+
+        tasks = []
+        print("Starting multiprocessing...")
         for root, dirs, files in os.walk(input_root):
             for file in files:
                 if not file.lower().endswith(('.png', '.jpg', '.jpeg')):
                     continue
 
-                print(f"Processing image {n}: {file}")
-
                 input_path = os.path.join(root, file)
-                image = cv2.imread(input_path)
 
-                if image is None:
-                    print(f"Failed to load image: {input_path}")
-                    continue
-
-                fixed_image = track_eyes(image, aspect_width, aspect_height)
-
-                # Preserve folder structure in output
+                # preserve folder structure in output
                 rel_path = os.path.relpath(root, input_root)
                 output_dir = os.path.join(output_root, rel_path)
                 os.makedirs(output_dir, exist_ok=True)
@@ -48,9 +58,34 @@ def handle_selection(selection):
                     f"{aspect_width}x{aspect_height}_{file}"
                 )
 
-                cv2.imwrite(output_path, fixed_image)
+                tasks.append((input_path, output_path))
 
-                n += 1
+            with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+                futures = [
+                    executor.submit(
+                        process_image,
+                        input_path,
+                        output_path,
+                        aspect_width,
+                        aspect_height
+                    )
+                    for input_path, output_path in tasks
+                ]
+
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                        if MEASURE_TIME:
+                            processed_images += 1
+                    except Exception as e:
+                        print(f"Error processing image: {e}")
+
+        if MEASURE_TIME:
+            end_time = time.time()
+            elapsed = end_time - start_time
+            print(f"Total time: {elapsed:.2f} seconds")
+            print(f"Average time per image: {elapsed / max(processed_images, 1):.2f} seconds")
+
 
     elif selection == '1': 
         output_root = "output_pictures"
