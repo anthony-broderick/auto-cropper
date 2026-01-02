@@ -26,4 +26,6 @@ The output pictures can be zipped into individual folders by selecting option '1
 
 The program uses the built in cv2 haarcascade data models to detect faces and eyes. The program calculates the average height of all of the eye boxes and the average center x position of all of the eye boxes. Using these two averages, the program centers the photo with the average center x position in the horizontal middle of the photo and the average eye height 1/3 of the photo's height from the top of the picture. It will iterate through each photo in the input_pictures folder, doing this process for each.
 
-# auto-cropper
+## Multi-Processing
+
+The program takes the max amount of CPU cores from the user's device and does multi-processing amongst each photo in the input_pictures folder.
